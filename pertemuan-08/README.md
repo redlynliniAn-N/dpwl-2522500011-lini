@@ -41,3 +41,22 @@ View Manajemen Penyewa telah dibuat sebagai bagian dari pengembangan fitur Manaj
 
 ### Git
 - Commit: `Membuat tampilan dan form penyewa`
+
+
+## 3. Pengembangan Model Manajemen Penyewa
+
+### Deskripsi
+Pada tahap ketiga pengerjaan UTS P8 dilakukan pengembangan Model Manajemen Penyewa dengan memanfaatkan file `Penyewa_model.php` yang telah tersedia dari pengerjaan sebelumnya.
+
+### Implementasi
+- Mempertahankan method P6 yang sudah ada, seperti registrasi, login, dan pengelolaan profil penyewa.
+- Menambahkan method `getAll()` untuk mengambil seluruh data penyewa.
+- Menambahkan method `update()` untuk memperbarui data penyewa.
+- Menambahkan method `delete()` untuk menghapus data penyewa.
+- Menggunakan prepared statement untuk proses pembaruan dan penghapusan data.
+
+### Hasil
+Model Manajemen Penyewa berhasil dikembangkan dengan menambahkan fungsi pengambilan, pembaruan, dan penghapusan data penyewa untuk kebutuhan Admin pada P8.
+
+### Git
+- Commit: `Menambahkan model manajemen penyewa`
