@@ -60,3 +60,120 @@ Model Manajemen Penyewa berhasil dikembangkan dengan menambahkan fungsi pengambi
 
 ### Git
 - Commit: `Menambahkan model manajemen penyewa`
+## 4. Pengembangan Controller Manajemen Penyewa
+
+### Deskripsi
+Pada tahap keempat pengerjaan UTS P8 dilakukan penambahan Controller Manajemen Penyewa pada aplikasi Admin.
+
+### Implementasi
+- Mempertahankan method `index()` yang sudah tersedia pada Controller Admin.
+- Menambahkan constructor untuk memanggil `Penyewa_model`.
+- Menambahkan autentikasi Admin menggunakan `require_admin_login()`.
+- Menambahkan method `penyewa()` untuk menampilkan halaman Manajemen Penyewa.
+- Mengambil data penyewa menggunakan method `getAll()`.
+- Mengirim data penyewa ke View `admin/penyewa_view`.
+- Menggunakan flash message untuk menampilkan informasi proses.
+
+### Hasil
+Controller Admin berhasil dikembangkan untuk menampilkan halaman Manajemen Penyewa dengan mengambil data dari Model Penyewa.
+
+### Git
+- Commit: `Menambahkan controller manajemen penyewa`
+## 4. Pengembangan Controller Manajemen Penyewa
+
+### Deskripsi
+Pada tahap keempat pengerjaan UTS P8 dilakukan penambahan Controller Manajemen Penyewa pada aplikasi Admin.
+
+### Implementasi
+- Mempertahankan method `index()` yang sudah tersedia pada Controller Admin.
+- Menambahkan constructor untuk memanggil `Penyewa_model`.
+- Menambahkan autentikasi Admin menggunakan `require_admin_login()`.
+- Menambahkan method `penyewa()` untuk menampilkan halaman Manajemen Penyewa.
+- Mengambil data penyewa menggunakan method `getAll()`.
+- Mengirim data penyewa ke View `admin/penyewa_view`.
+- Menggunakan flash message untuk menampilkan informasi proses.
+
+### Hasil
+Controller Admin berhasil dikembangkan untuk menampilkan halaman Manajemen Penyewa dengan mengambil data dari Model Penyewa.
+
+### Git
+- Commit: `Menambahkan controller manajemen penyewa`
+
+## 5. Implementasi CRUD Manajemen Penyewa
+
+### Deskripsi
+Pada tahap kelima pengerjaan UTS P8, saya melakukan implementasi fitur CRUD (Create, Read, Update, Delete) pada halaman Manajemen Penyewa.
+
+### Implementasi
+- Mengimplementasikan fitur menampilkan seluruh data penyewa.
+- Mengimplementasikan fitur tambah data penyewa.
+- Mengimplementasikan fitur ubah data penyewa.
+- Mengimplementasikan fitur hapus data penyewa.
+- Menghubungkan Controller Admin dengan Model Penyewa dan View Manajemen Penyewa.
+- Menggunakan method Model Penyewa untuk mengelola data pada database.
+
+### Hasil
+Fitur CRUD Manajemen Penyewa berhasil diimplementasikan sehingga Admin dapat melakukan pengelolaan data penyewa melalui halaman Manajemen Penyewa.
+
+### Git
+- Commit: `Mengimplementasikan CRUD manajemen penyewa`
+
+## 6. Validasi, Keamanan, dan Upload Dokumen Penyewa
+
+### Deskripsi
+Pada tahap keenam pengerjaan UTS P8, saya melakukan penerapan validasi input, keamanan akses, serta fitur upload dokumen identitas penyewa.
+
+### Implementasi
+- Melakukan validasi input pada formulir penyewa.
+- Melakukan sanitasi data untuk mengurangi risiko input yang tidak sesuai.
+- Membatasi akses halaman Manajemen Penyewa hanya untuk Admin.
+- Menerapkan pola Post/Redirect/Get (PRG) setelah proses pengelolaan data.
+- Menambahkan fitur upload foto KTP penyewa.
+- Menambahkan fitur upload foto SIM A penyewa.
+- Mengelola file foto KTP dan SIM A pada folder upload.
+- Menampilkan foto KTP dan SIM A pada tabel data penyewa.
+
+### Hasil
+Fitur Manajemen Penyewa dilengkapi dengan validasi input, keamanan akses Admin, dan pengelolaan dokumen identitas penyewa.
+
+### Git
+- Commit: `Menambahkan validasi dan upload dokumen penyewa`
+
+## 7. Pengujian Fitur Manajemen Penyewa
+
+### Deskripsi
+Pada tahap ketujuh pengerjaan UTS P8, saya melakukan pengujian terhadap fitur Manajemen Penyewa untuk memastikan seluruh fungsi berjalan sesuai kebutuhan.
+
+### Implementasi
+Pengujian dilakukan terhadap beberapa fitur berikut:
+- Menguji tampilan data penyewa.
+- Menguji penambahan data penyewa.
+- Menguji perubahan data penyewa.
+- Menguji penghapusan data penyewa.
+- Menguji validasi formulir penyewa.
+- Menguji upload foto KTP.
+- Menguji upload foto SIM A.
+- Menguji akses halaman Manajemen Penyewa menggunakan akun Admin.
+
+### Hasil
+Pengujian dilakukan untuk memastikan fitur Manajemen Penyewa dapat berjalan dengan baik dan sesuai dengan kebutuhan aplikasi penyewaan kendaraan.
+
+### Git
+- Commit: `Melakukan pengujian manajemen penyewa`
+
+## 8. Export Database dan Dokumentasi
+
+### Deskripsi
+Pada tahap terakhir pengerjaan UTS P8, saya melakukan export database dan melengkapi dokumentasi pengerjaan project.
+
+### Implementasi
+- Melakukan export database aplikasi penyewaan kendaraan ke file SQL.
+- Menyimpan file hasil export database sebagai dokumentasi database.
+- Melengkapi dokumentasi pengerjaan pada folder `pertemuan-08`.
+- Melakukan Git add, commit, dan push terhadap perubahan project.
+
+### Hasil
+Database dan dokumentasi pengerjaan UTS P8 berhasil disiapkan sebagai bagian dari pengumpulan tugas.
+
+### Git
+- Commit: `Melengkapi dokumentasi dan database UTS P8`
