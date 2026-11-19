@@ -1,0 +1,9 @@
+# P9 BARU - bukti pembayaran hanya boleh diakses lewat controller
+# (transaksi/bukti dan admin/pembayaran/bukti) setelah pemeriksaan akses.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>
