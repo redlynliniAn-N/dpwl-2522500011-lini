@@ -896,3 +896,212 @@ git push
 Tahap E mendukung integrasi fitur pelunasan transaksi ke dalam aplikasi penyewaan kendaraan. Dengan adanya route dan menu Pelunasan Transaksi, admin dapat diarahkan menuju halaman pengelolaan pelunasan melalui navigasi aplikasi.
 
 Setelah tahap ini selesai, pengerjaan dilanjutkan ke **Bagian F: Membuat View Daftar dan Detail Pelunasan**.
+
+# F. Membuat View Daftar dan Detail Pelunasan
+
+## Deskripsi
+
+Pada tahap ini, saya membuat View untuk menampilkan daftar transaksi yang masih memiliki kewajiban pembayaran dan halaman detail transaksi yang akan diproses pelunasannya oleh admin.
+
+View bertugas menampilkan data yang diterima dari Controller. Seluruh data diperoleh melalui Model sehingga View tidak melakukan query database maupun menghitung aturan bisnis secara mandiri.
+
+## F.1. Membuat View Daftar Pelunasan
+
+### Deskripsi
+
+Saya membuat halaman daftar pelunasan dengan nama file `pelunasan.php` pada direktori:
+
+`application/views/admin/pelunasan.php`
+
+Halaman ini digunakan untuk menampilkan seluruh transaksi yang masih memiliki sisa kewajiban pembayaran.
+
+### Implementasi
+
+View menggunakan variabel `$daftarPelunasan` yang dikirimkan oleh `Pembayaran_controller.php`.
+
+Informasi yang ditampilkan pada halaman daftar pelunasan meliputi:
+
+1. Nomor urut transaksi.
+2. Kode sewa.
+3. Identitas penyewa, yaitu nama lengkap dan username.
+4. Nomor HP penyewa.
+5. Periode sewa, berupa tanggal mulai dan tanggal selesai.
+6. Status transaksi.
+7. Total transaksi.
+8. Total pembayaran yang sudah valid.
+9. Sisa kewajiban pembayaran.
+10. Tombol **Detail / Proses** untuk membuka halaman detail pelunasan.
+
+Saya juga menambahkan kondisi apabila belum terdapat transaksi yang memiliki sisa kewajiban. Sistem akan menampilkan pesan bahwa tidak ada transaksi yang perlu dilunasi.
+
+Selain itu, pesan informasi atau notifikasi dari Controller ditampilkan menggunakan mekanisme flash message.
+
+### Pengamanan Data
+
+Untuk menjaga keamanan tampilan, data teks yang berasal dari database ditampilkan menggunakan `htmlspecialchars()` melalui fungsi bantuan `$e`.
+
+Nilai nominal pembayaran ditampilkan menggunakan `number_format()` agar lebih mudah dibaca dalam format Rupiah.
+
+Setiap transaksi memiliki tautan menuju halaman detail berdasarkan kode sewa yang bersangkutan.
+
+### Hasil
+
+Halaman daftar pelunasan digunakan sebagai tempat admin melihat transaksi yang masih memiliki kewajiban pembayaran serta memilih transaksi yang akan diproses lebih lanjut.
+
+## F.2. Membuat View Detail Pelunasan
+
+### Deskripsi
+
+Setelah membuat halaman daftar pelunasan, saya membuat halaman detail transaksi dengan nama file `pelunasan_detail.php` pada direktori:
+
+`application/views/admin/pelunasan_detail.php`
+
+Halaman ini digunakan untuk menampilkan informasi lengkap mengenai transaksi penyewaan kendaraan sebelum admin melakukan pencatatan pelunasan.
+
+### Implementasi
+
+View menggunakan variabel `$detailPelunasan` yang dikirimkan oleh `Pembayaran_controller.php`.
+
+Informasi yang ditampilkan meliputi:
+
+1. **Informasi transaksi dan penyewa**
+   - Kode transaksi.
+   - Nama lengkap penyewa.
+   - Username.
+   - NIK.
+   - Nomor HP.
+   - Alamat.
+   - Periode sewa.
+   - Waktu pengambilan kendaraan.
+   - Status transaksi.
+
+2. **Rincian kendaraan**
+   - Nomor polisi.
+   - Nama kendaraan.
+   - Tarif sewa per hari.
+   - Lama sewa.
+   - Subtotal setiap kendaraan.
+
+3. **Ringkasan pembayaran**
+   - Total transaksi.
+   - Total pembayaran valid sebelumnya.
+   - Sisa kewajiban pelunasan.
+
+4. **Riwayat pembayaran**
+   - Kode pembayaran.
+   - Tanggal pembayaran.
+   - Jenis pembayaran.
+   - Metode pembayaran.
+   - Nominal pembayaran.
+   - Status pembayaran.
+   - Tautan untuk melihat bukti pembayaran apabila tersedia.
+
+### Implementasi Formulir Pelunasan
+
+Pada halaman detail, saya menyediakan formulir pencatatan pelunasan yang dapat digunakan admin untuk mencatat pembayaran akhir penyewa.
+
+Ketentuan formulir yang diterapkan:
+
+1. Formulir menggunakan metode pengiriman `POST`.
+2. Formulir diarahkan ke route proses pelunasan berdasarkan kode transaksi.
+3. Formulir menggunakan `enctype="multipart/form-data"` untuk mendukung unggah bukti transfer.
+4. Admin wajib memilih metode pembayaran.
+5. Metode pembayaran yang tersedia adalah tunai dan transfer.
+6. Jika metode transfer dipilih, sistem menampilkan input untuk mengunggah bukti transfer.
+7. Bukti transfer wajib disertakan apabila metode pembayaran yang dipilih adalah transfer.
+8. Nominal pelunasan tidak dimasukkan secara bebas oleh admin karena sistem menggunakan seluruh nilai sisa kewajiban yang telah dihitung oleh Model.
+
+Bukti transfer berasal dari penyewa, misalnya melalui WhatsApp, kemudian diunggah oleh admin ke dalam aplikasi.
+
+### Pengendalian Formulir Pelunasan
+
+Saya juga menerapkan kondisi agar formulir pelunasan hanya ditampilkan apabila transaksi memenuhi ketentuan.
+
+Ketentuan tersebut meliputi:
+
+- Status transaksi memenuhi syarat, yaitu `disetujui` atau `lunas`.
+- Masih terdapat sisa kewajiban pembayaran.
+- Belum terdapat record pembayaran dengan jenis `pelunasan`.
+
+Apabila transaksi sudah memiliki record pelunasan, formulir tidak ditampilkan kembali. Hal ini bertujuan untuk mencegah pencatatan pelunasan lebih dari satu kali pada transaksi yang sama.
+
+Saya juga menambahkan tombol untuk melihat atau mencetak dokumen transaksi serta tombol untuk kembali ke halaman daftar pelunasan.
+
+### Pengamanan Data
+
+Seluruh data teks yang ditampilkan pada halaman detail menggunakan `htmlspecialchars()` untuk membantu mencegah penyisipan HTML atau JavaScript melalui data pengguna.
+
+Format nominal pembayaran ditampilkan menggunakan `number_format()` agar lebih mudah dibaca.
+
+### Hasil
+
+Halaman detail pelunasan menyediakan informasi lengkap mengenai transaksi, kendaraan, penyewa, serta riwayat pembayaran. Admin juga dapat mencatat pelunasan melalui formulir yang telah disediakan sesuai ketentuan sistem.
+
+## F.3. Menguji Tampilan dan Proses Pelunasan
+
+### Deskripsi
+
+Setelah membuat View daftar dan detail pelunasan, saya melakukan pemeriksaan terhadap tampilan dan fungsi yang tersedia pada kedua halaman tersebut.
+
+### Daftar Pemeriksaan
+
+Pemeriksaan dilakukan terhadap beberapa hal berikut:
+
+1. Halaman daftar pelunasan menampilkan transaksi yang masih memiliki kewajiban pembayaran.
+2. Tautan **Detail / Proses** membuka transaksi yang sesuai.
+3. Informasi transaksi, penyewa, kendaraan, dan riwayat pembayaran ditampilkan dengan benar.
+4. Formulir menyediakan pilihan metode pembayaran tunai dan transfer.
+5. Metode transfer menyediakan input untuk mengunggah bukti transfer.
+6. Formulir dikirim menggunakan metode `POST`.
+7. Transaksi yang telah lunas tidak menampilkan formulir pelunasan kembali.
+8. Pesan keberhasilan atau kegagalan ditampilkan sesuai hasil pemrosesan Controller.
+9. Data teks ditampilkan dengan aman melalui escaping.
+
+### Hasil Pengujian
+
+Hasil pemeriksaan dicatat berdasarkan pengujian langsung pada aplikasi.
+
+- Tampilan daftar pelunasan: [Isi hasil pengujian].
+- Tautan detail transaksi: [Isi hasil pengujian].
+- Informasi transaksi dan pembayaran: [Isi hasil pengujian].
+- Pilihan metode pembayaran: [Isi hasil pengujian].
+- Input bukti transfer: [Isi hasil pengujian].
+- Pengiriman formulir POST: [Isi hasil pengujian].
+- Pengendalian transaksi yang sudah lunas: [Isi hasil pengujian].
+- Tampilan pesan dari Controller: [Isi hasil pengujian].
+- Pengamanan output: [Isi hasil pengujian].
+
+## F.4. Memperbarui Dokumentasi dan Git
+
+### Deskripsi
+
+Setelah pembuatan dan pemeriksaan View selesai, saya memperbarui dokumentasi pada file `README.md` untuk mencatat perubahan yang dilakukan pada tahap F.
+
+Dokumentasi mencakup pembuatan halaman daftar pelunasan, halaman detail pelunasan, informasi yang ditampilkan, formulir pencatatan pelunasan, serta hasil pemeriksaan dan pengujian.
+
+### Implementasi
+
+Langkah-langkah yang dilakukan:
+
+1. Memperbarui dokumentasi tahap F pada file `pertemuan-10/README.md`.
+2. Mencatat pembuatan file `pelunasan.php`.
+3. Mencatat pembuatan file `pelunasan_detail.php`.
+4. Mencatat informasi dan formulir yang tersedia pada kedua halaman.
+5. Mencatat hasil pemeriksaan dan pengujian aktual.
+6. Menyalin seluruh isi workspace `dpwl-nim/` ke folder arsip `dpwl-nim-nama/pertemuan-10/` dengan menimpa berkas yang sesuai.
+7. Membuka Terminal pada direktori repositori Git.
+8. Menyimpan perubahan menggunakan perintah Git berikut secara berurutan.
+
+### Perintah Git
+
+```bash
+git add .
+git commit -m "Menambahkan view daftar dan detail pelunasan P10"
+git push
+```
+
+### Hasil
+
+Tahap F menghasilkan dua halaman View, yaitu halaman daftar pelunasan dan halaman detail pelunasan. Kedua halaman tersebut digunakan admin untuk melihat transaksi yang masih memiliki kewajiban pembayaran dan mencatat pelunasan sesuai data yang disediakan oleh Model dan Controller.
+
+Perubahan View juga diperiksa agar tidak mengganggu fitur pembayaran P9 yang telah tersedia.
