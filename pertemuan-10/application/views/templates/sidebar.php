@@ -1,0 +1,82 @@
+<!-- Left side column. contains the logo and sidebar -->
+<aside class="main-sidebar">
+<!-- sidebar: style can be found in sidebar.less -->
+<section class="sidebar">
+<!-- Sidebar user panel (optional) -->
+<div class="user-panel">
+<div class="pull-left image">
+<img src="<?= $adminlte_url . 'dist/img/avatar.png' ?>" class="img-circle"
+
+alt="User Image">
+</div>
+<div class="pull-left info">
+<p>
+Login sebagai:
+<strong><?= htmlspecialchars(
+$username,
+ENT_QUOTES,
+'UTF-8'
+) ?></strong>
+
+</p>
+<!-- Status -->
+<a href="#"><i class="fa fa-circle text-success"></i> Online</a>
+</div>
+</div>
+<!-- search form (Optional) -->
+<form action="#" method="get" class="sidebar-form">
+<div class="input-group">
+<input type="text" name="q" class="form-control" placeholder="Search...">
+<span class="input-group-btn">
+<button type="submit" name="search" id="search-btn" class="btn btn-flat"><i class="fa
+
+fa-search"></i>
+</button>
+</span>
+</div>
+</form>
+<!-- /.search form -->
+
+<!-- Sidebar Menu -->
+<ul class="sidebar-menu" data-widget="tree">
+<li class="header">MENU ADMIN</li>
+<?php $menuAktif = $menu_aktif ?? 'dashboard'; ?>
+<li class="<?= $menuAktif === 'dashboard' ? 'active' : '' ?>">
+<a href="<?= htmlspecialchars(site_url('admin'), ENT_QUOTES, 'UTF-8') ?>">
+<i class="fa fa-dashboard"></i> <span>Dashboard</span>
+</a>
+</li>
+<li>
+<a href="<?= htmlspecialchars(site_url('admin/madmin'), ENT_QUOTES, 'UTF-8') ?>">
+<i class="fa fa-users"></i> <span>Manajemen Admin</span>
+</a>
+</li>
+<!-- ditambahkan pada P5-->
+<li>
+<a href="<?= htmlspecialchars(site_url('admin/mobil'), ENT_QUOTES, 'UTF-8') ?>">
+<i class="fa fa-car"></i> <span>Manajemen Kendaraan</span>
+</a>
+</li>
+<!-- Transaksi Sewa Langsung (admin) -->
+<li class="<?= $menuAktif === 'sewa_langsung' ? 'active' : '' ?>">
+<a href="<?= htmlspecialchars(site_url('admin/sewa-langsung'), ENT_QUOTES, 'UTF-8') ?>">
+<i class="fa fa-exchange"></i> <span>Sewa Langsung</span>
+</a>
+</li>
+<!-- Master Verifikasi Pembayaran (admin) -->
+<li class="<?= $menuAktif === 'verifikasi' ? 'active' : '' ?>">
+<a href="<?= htmlspecialchars(site_url('admin/verifikasi'), ENT_QUOTES, 'UTF-8') ?>">
+<i class="fa fa-check-square-o"></i> <span>Verifikasi Pembayaran</span>
+</a>
+</li>
+<li>
+<a href="<?= htmlspecialchars(site_url('admin/pembayaran/pelunasan'), ENT_QUOTES, 'UTF-8') ?>">
+<i class="fa fa-credit-card"></i> <span>Pelunasan Transaksi</span>
+</a>
+</li>
+<!--/ ditambahkan pada P5-->
+</ul>
+<!-- /.sidebar-menu -->
+</section>
+<!-- /.sidebar -->
+</aside>
