@@ -1105,3 +1105,90 @@ git push
 Tahap F menghasilkan dua halaman View, yaitu halaman daftar pelunasan dan halaman detail pelunasan. Kedua halaman tersebut digunakan admin untuk melihat transaksi yang masih memiliki kewajiban pembayaran dan mencatat pelunasan sesuai data yang disediakan oleh Model dan Controller.
 
 Perubahan View juga diperiksa agar tidak mengganggu fitur pembayaran P9 yang telah tersedia.
+
+# G. Membuat Dokumen Transaksi
+
+## Deskripsi
+
+Pada tahap ini, saya membuat dokumen transaksi yang digunakan untuk menampilkan ringkasan informasi penyewaan kendaraan dan riwayat pembayaran berdasarkan data yang tersimpan di dalam basis data.
+
+Dokumen transaksi dibuat menggunakan pendekatan MVC. Data diperoleh melalui Model dan dikirimkan oleh Controller ke View untuk ditampilkan kepada admin.
+
+Dokumen ini juga dilengkapi dengan fitur cetak atau simpan sebagai PDF menggunakan fasilitas cetak pada browser.
+
+## G.1. Membuat dan Mengimplementasikan View Dokumen Transaksi
+
+### Deskripsi
+
+Saya membuat file View baru dengan nama `dokumen_transaksi.php` pada direktori:
+
+`application/views/admin/dokumen_transaksi.php`
+
+View ini menerima data `$detailPelunasan` yang telah disiapkan oleh Model dan dikirimkan melalui method `dokumenTransaksi()` pada `Pembayaran_controller.php`.
+
+### Implementasi
+
+Dokumen transaksi disusun menjadi beberapa bagian informasi sebagai berikut.
+
+**1. Informasi Transaksi**
+
+Bagian ini menampilkan informasi transaksi penyewaan, meliputi:
+
+- Kode transaksi.
+- Tanggal mulai sewa.
+- Tanggal selesai sewa.
+- Waktu pengambilan kendaraan.
+- Status transaksi.
+
+**2. Identitas Penyewa**
+
+Bagian ini menampilkan informasi identitas penyewa, meliputi:
+
+- NIK.
+- Nama lengkap.
+- Username.
+- Nomor telepon.
+- Alamat.
+
+**3. Rincian Kendaraan**
+
+Rincian kendaraan ditampilkan dalam bentuk tabel dengan informasi:
+
+- Nomor polisi.
+- Nama kendaraan.
+- Tarif sewa per hari.
+- Lama sewa.
+- Subtotal.
+
+Data rincian kendaraan menggunakan array `$detailPelunasan['daftar_kendaraan']`.
+
+**4. Riwayat Pembayaran**
+
+Bagian ini menampilkan seluruh riwayat pembayaran yang tercatat pada transaksi, meliputi:
+
+- Kode pembayaran.
+- Tanggal pembayaran.
+- Jenis pembayaran.
+- Metode pembayaran.
+- Nominal pembayaran.
+- Status pembayaran.
+
+Data riwayat pembayaran menggunakan array `$detailPelunasan['riwayat_pembayaran']`.
+
+Dengan demikian, pembayaran uang muka (DP) dan pembayaran pelunasan dapat ditampilkan dalam satu dokumen transaksi.
+
+**5. Ringkasan Pembayaran**
+
+Bagian ini menampilkan ringkasan nilai pembayaran, yaitu:
+
+- Total transaksi dari `$detailPelunasan['total_transaksi']`.
+- Total pembayaran valid dari `$detailPelunasan['total_terbayar']`.
+- Sisa kewajiban dari `$detailPelunasan['sisa_kewajiban']`.
+
+Seluruh informasi ditampilkan berdasarkan transaksi yang dipilih. View hanya bertugas menyajikan data dan tidak melakukan query SQL atau menghitung ulang aturan bisnis.
+
+### Pengamanan Data
+
+Untuk menjaga keamanan tampilan dokumen, saya menerapkan `htmlspecialchars()` terhadap data teks yang ditampilkan.
+
+Pengamanan ini bertujuan untuk mencegah penyisipan HTML atau Java
