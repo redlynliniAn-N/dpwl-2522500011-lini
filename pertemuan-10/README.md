@@ -265,4 +265,217 @@ Tahap penyesuaian struktur basis data telah didokumentasikan sebagai bagian dari
 
 ---
 
-**Catatan:** Hasil pengujian dan keberhasilan perubahan database dicatat berdasarkan pemeriksaan langsung pada phpMyAdmin. Perintah SQL cukup dijalankan satu kali setelah memastikan struktur kolom belum memiliki nilai ENUM `lunas`.
+**Catatan:** Hasil pengujian dan keberhasilan perubahan database dicatat berdasarkan pemeriksaan langsung pada phpMyAdmin. Perintah SQL cukup dijalankan satu kali setelah memastikan struktur kolom belum memiliki nilai ENUM `lunas`.git
+
+# C. Mengimplementasikan Model Pelunasan pada `application/models/Pembayaran_model.php`
+
+## C.1. Mengambil Daftar Transaksi yang Memenuhi Syarat Pelunasan
+
+### Deskripsi
+
+Pada tahap ini, saya melakukan pengembangan pada file `Pembayaran_model.php` dengan menambahkan method `getDaftarPelunasan()`.
+
+Method ini digunakan untuk mengambil daftar transaksi penyewaan kendaraan yang dapat diproses pelunasannya oleh admin. Data yang diambil meliputi kode transaksi, identitas penyewa, periode sewa, status transaksi, total transaksi, total pembayaran yang sudah valid, dan sisa kewajiban pembayaran.
+
+### Implementasi
+
+Saya menambahkan method `getDaftarPelunasan()` pada class `Pembayaran_model` dengan beberapa ketentuan berikut:
+
+1. Mengambil data transaksi dari tabel `t_sewa`.
+2. Menghubungkan data transaksi dengan identitas penyewa pada tabel `t_penyewa`.
+3. Mengambil rincian transaksi dari tabel `t_pilih`.
+4. Menghitung total transaksi berdasarkan perkalian `hrg_sewa * n_hari` pada setiap detail kendaraan.
+5. Menghitung total pembayaran berdasarkan data pada tabel `t_bayar` yang memiliki status pembayaran `valid`.
+6. Menghitung sisa kewajiban dengan mengurangi total transaksi dan total pembayaran valid.
+7. Menggunakan prepared statement MySQLi untuk menjalankan query.
+
+Rumus perhitungan sisa kewajiban:
+
+**Sisa Kewajiban = Total Transaksi - Total Pembayaran Valid**
+
+### Hasil
+
+Method `getDaftarPelunasan()` digunakan untuk menyediakan data transaksi beserta sisa kewajiban yang akan ditampilkan pada halaman daftar pelunasan.
+
+## C.2. Mengambil Detail Transaksi dan Riwayat Pembayaran
+
+### Deskripsi
+
+Pada tahap ini, saya menambahkan method `getDetailPelunasan(string $kodeSewa)` untuk mengambil informasi lengkap dari suatu transaksi berdasarkan kode transaksi sewa.
+
+Method ini digunakan agar admin dapat melihat rincian transaksi dan riwayat pembayaran sebelum melakukan proses pelunasan.
+
+### Implementasi
+
+Data yang diambil melalui method ini meliputi:
+
+1. Identitas dan data penyewa.
+2. Tanggal mulai dan tanggal selesai sewa.
+3. Waktu pengambilan kendaraan.
+4. Status transaksi.
+5. Total nilai transaksi.
+6. Total pembayaran valid.
+7. Sisa kewajiban pembayaran.
+8. Riwayat pembayaran dari tabel `t_bayar`.
+9. Rincian kendaraan yang disewa dari tabel `t_pilih` dan `t_mobil`.
+
+Perhitungan total transaksi tetap menggunakan snapshot tarif pada tabel `t_pilih`, yaitu tarif yang tersimpan ketika transaksi dibuat, bukan menggunakan tarif kendaraan terbaru pada tabel `t_mobil`.
+
+Selain itu, method ini menggunakan prepared statement MySQLi dan melakukan validasi terhadap kode transaksi sebelum menjalankan query. Apabila transaksi tidak ditemukan, method akan mengembalikan nilai `null`.
+
+### Hasil
+
+Method `getDetailPelunasan()` digunakan untuk menampilkan informasi transaksi secara lengkap, termasuk riwayat pembayaran dan sisa kewajiban yang harus dilunasi.
+
+## C.3. Membuat Kode Pembayaran Pelunasan
+
+### Deskripsi
+
+Pada tahap ini, saya menambahkan method internal `buatKodeBayarPelunasan(string $tanggalKode)` untuk menghasilkan kode pembayaran pelunasan secara otomatis.
+
+Kode pembayaran dibuat dengan format:
+
+`PAY/YYYYMMDD/NN`
+
+Keterangan:
+
+- `PAY` merupakan awalan kode pembayaran.
+- `YYYYMMDD` merupakan tanggal pembayaran.
+- `NN` merupakan nomor urut pembayaran harian dengan dua digit.
+
+### Implementasi
+
+Pembuatan kode pembayaran dilakukan dengan ketentuan berikut:
+
+1. Mengambil kode pembayaran terakhir berdasarkan tanggal yang sama.
+2. Menentukan nomor urut berikutnya.
+3. Apabila belum terdapat pembayaran pada tanggal tersebut, nomor urut dimulai dari `01`.
+4. Nomor urut pembayaran dibatasi sampai dengan `99`.
+5. Menggunakan named lock `dpwl_payment_code_sequence` untuk mencegah benturan nomor urut antara pembayaran DP pada proses checkout P9 dan pembayaran pelunasan pada P10.
+
+Method ini bersifat private sehingga hanya dapat digunakan dari dalam class `Pembayaran_model`.
+
+### Hasil
+
+Method `buatKodeBayarPelunasan()` digunakan untuk menghasilkan kode pembayaran pelunasan secara otomatis dengan format yang telah ditentukan.
+
+## C.4. Menghitung Sisa Kewajiban dan Memvalidasi Pelunasan
+
+### Deskripsi
+
+Pada tahap ini, saya menambahkan method `simpanPelunasan()` pada file `Pembayaran_model.php`.
+
+Method ini bertanggung jawab untuk memproses dan menyimpan pembayaran pelunasan yang dicatat langsung oleh admin. Pembayaran dapat dilakukan melalui metode tunai maupun transfer.
+
+Pembayaran pelunasan harus dilakukan satu kali untuk seluruh sisa kewajiban. Sistem tidak menyediakan pembayaran pelunasan secara bertahap atau melalui cicilan.
+
+### Implementasi
+
+Proses pelunasan dilakukan dengan beberapa ketentuan berikut:
+
+1. Kode transaksi wajib tersedia dan transaksi harus ditemukan.
+2. Status transaksi harus memenuhi syarat pelunasan.
+3. Total transaksi harus lebih dari nol.
+4. Sisa kewajiban harus lebih dari nol.
+5. Nominal pembayaran harus sama dengan seluruh sisa kewajiban.
+6. Metode pembayaran hanya menerima nilai `tunai` atau `transfer`.
+7. Bukti transfer wajib tersedia apabila metode pembayaran yang digunakan adalah transfer.
+8. Jenis pembayaran disimpan dengan nilai `pelunasan` pada kolom `jns_byr`.
+9. Status pembayaran disimpan dengan nilai `valid` pada kolom `sttus_byr`.
+10. Satu transaksi hanya boleh memiliki satu record pembayaran pelunasan.
+11. Nominal pelunasan tidak boleh melebihi kapasitas kolom `MEDIUMINT`, yaitu 8.388.607.
+
+Bukti transfer diserahkan oleh penyewa kepada admin melalui media komunikasi yang disepakati, misalnya WhatsApp. Selanjutnya, admin mengunggah bukti transfer tersebut melalui aplikasi.
+
+### Proses Penyimpanan Pelunasan
+
+Penyimpanan pelunasan dilakukan menggunakan transaksi basis data agar proses pencatatan pembayaran dan perubahan status transaksi berjalan secara atomik.
+
+Urutan prosesnya adalah:
+
+1. Memperoleh named lock untuk pembuatan kode pembayaran.
+2. Memulai transaksi basis data.
+3. Mengunci dan memeriksa data transaksi menggunakan `SELECT ... FOR UPDATE`.
+4. Memvalidasi status transaksi, total transaksi, total pembayaran valid, dan sisa kewajiban.
+5. Memastikan belum terdapat record pelunasan sebelumnya.
+6. Membuat kode pembayaran pelunasan.
+7. Menyimpan record pelunasan pada tabel `t_bayar`.
+8. Memperbarui status transaksi pada tabel `t_sewa` menjadi `lunas`.
+9. Memastikan perubahan status transaksi berhasil.
+10. Melakukan `COMMIT` apabila seluruh proses berhasil dan melepaskan named lock.
+
+Apabila terjadi kegagalan pada salah satu proses, sistem melakukan `ROLLBACK` agar data pembayaran dan perubahan status transaksi tidak tersimpan sebagian.
+
+### Hasil
+
+Setelah proses pelunasan berhasil disimpan, pembayaran tercatat pada tabel `t_bayar` dan status transaksi pada tabel `t_sewa` berubah menjadi `lunas`.
+
+Pada tahap P10, proses pelunasan hanya mengubah status transaksi menjadi `lunas`. Status kendaraan pada tabel `t_mobil` tidak diubah karena proses serah terima kendaraan merupakan materi pada Pertemuan 11 (P11).
+
+## C.5. Menguji Model Pelunasan
+
+### Deskripsi
+
+Setelah seluruh method pelunasan selesai ditambahkan, saya melakukan pemeriksaan terhadap Model Pelunasan untuk memastikan setiap method dapat menjalankan tugasnya sesuai ketentuan pada Modul P10.
+
+### Implementasi dan Pengujian
+
+Pemeriksaan dilakukan terhadap beberapa hal berikut:
+
+1. Memastikan `getDaftarPelunasan()` mengambil transaksi yang memenuhi syarat pelunasan dan masih memiliki sisa kewajiban.
+2. Memastikan `getDetailPelunasan()` menampilkan total transaksi, total pembayaran valid, sisa kewajiban, riwayat pembayaran, dan rincian kendaraan.
+3. Memastikan kode pembayaran mengikuti format `PAY/YYYYMMDD/NN`.
+4. Memastikan nominal pelunasan harus sama dengan seluruh sisa kewajiban.
+5. Memastikan metode pembayaran selain `tunai` dan `transfer` ditolak.
+6. Memastikan transaksi yang sudah memiliki record pelunasan tidak dapat dilunasi kembali.
+7. Memastikan pencatatan pelunasan mengubah status transaksi menjadi `lunas`.
+8. Memastikan status kendaraan tidak berubah akibat proses pelunasan.
+9. Memastikan kegagalan proses menyebabkan transaksi basis data dibatalkan melalui `ROLLBACK`.
+
+### Hasil Pengujian
+
+Hasil pemeriksaan Model Pelunasan:
+
+- Method `getDaftarPelunasan()`: (Isi hasil pemeriksaan).
+- Method `getDetailPelunasan()`: (Isi hasil pemeriksaan).
+- Pembuatan kode pembayaran: (Isi hasil pemeriksaan).
+- Validasi metode pembayaran: (Isi hasil pemeriksaan).
+- Validasi nominal pelunasan: (Isi hasil pemeriksaan).
+- Pencegahan pelunasan ganda: (Isi hasil pemeriksaan).
+- Perubahan status transaksi menjadi `lunas`: (Isi hasil pemeriksaan).
+- Pemeriksaan status kendaraan: (Isi hasil pemeriksaan).
+- Pengujian `ROLLBACK`: (Isi hasil pemeriksaan).
+
+## C.6. Memperbarui Dokumentasi dan Git
+
+### Deskripsi
+
+Setelah implementasi Model Pelunasan selesai, saya memperbarui file `README.md` untuk mendokumentasikan method yang ditambahkan, proses perhitungan sisa kewajiban, validasi pembayaran, proses penyimpanan pelunasan, serta hasil pemeriksaan.
+
+### Implementasi
+
+Langkah-langkah yang dilakukan:
+
+1. Memperbarui dokumentasi tahap C pada file `pertemuan-10/README.md`.
+2. Mencatat method baru yang ditambahkan pada `Pembayaran_model.php`.
+3. Mendokumentasikan proses perhitungan total transaksi dan sisa kewajiban.
+4. Mendokumentasikan proses validasi dan penyimpanan pembayaran pelunasan.
+5. Mencatat hasil pemeriksaan setiap method.
+6. Menyalin seluruh isi workspace `dpwl-nim/` ke folder arsip `dpwl-nim-nama/pertemuan-10/` dengan menimpa berkas yang sesuai.
+7. Menyimpan perubahan ke repositori Git.
+
+### Perintah Git
+
+```bash
+git add .
+git commit -m "Mengimplementasikan model pelunasan P10"
+git push
+```
+
+### Hasil
+
+Implementasi Model Pelunasan telah didokumentasikan sebagai bagian dari pengembangan aplikasi pada Pertemuan 10. Model ini menjadi dasar untuk proses implementasi Controller Pelunasan pada tahap berikutnya.
+
+---
+
+**Catatan:** Hasil pengujian diisi berdasarkan pemeriksaan langsung pada aplikasi dan database. Seluruh method P9 pada `Pembayaran_model.php` tetap dipertahankan dan method P10 ditambahkan tanpa menghapus fitur pembayaran sebelumnya.
