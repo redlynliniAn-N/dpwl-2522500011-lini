@@ -470,7 +470,7 @@ Langkah-langkah yang dilakukan:
 git add .
 git commit -m "Mengimplementasikan model pelunasan P10"
 git push
-```
+```GI
 
 ### Hasil
 
@@ -479,3 +479,244 @@ Implementasi Model Pelunasan telah didokumentasikan sebagai bagian dari pengemba
 ---
 
 **Catatan:** Hasil pengujian diisi berdasarkan pemeriksaan langsung pada aplikasi dan database. Seluruh method P9 pada `Pembayaran_model.php` tetap dipertahankan dan method P10 ditambahkan tanpa menghapus fitur pembayaran sebelumnya.
+
+# D. Implementasi Controller Pelunasan
+
+## D.1. Menampilkan Daftar Transaksi yang Belum Lunas
+
+### Deskripsi
+
+Pada tahap ini, saya menambahkan method `pelunasanIndex()` pada file `Pembayaran_controller.php`.
+
+Method ini digunakan untuk menampilkan daftar transaksi yang masih memiliki kewajiban pelunasan. Controller bertugas menerima permintaan dari admin, memanggil Model untuk mengambil data transaksi, kemudian mengirimkan data tersebut ke View.
+
+### Implementasi
+
+Proses implementasi dilakukan dengan beberapa langkah berikut:
+
+1. Memastikan pengguna telah login sebagai admin menggunakan `require_admin_login()`.
+2. Membatasi permintaan agar hanya menggunakan metode HTTP `GET`.
+3. Memanggil method `getDaftarPelunasan()` pada `Pembayaran_model.php`.
+4. Mengambil pesan notifikasi dari session.
+5. Mengirimkan data daftar pelunasan, username admin, dan pesan notifikasi ke View `admin/pelunasan.php`.
+6. Menambahkan penanganan kesalahan menggunakan `try-catch` apabila data gagal ditampilkan.
+
+Controller tidak melakukan perhitungan total transaksi maupun sisa kewajiban secara langsung karena proses tersebut merupakan tanggung jawab Model.
+
+### Hasil
+
+Method `pelunasanIndex()` digunakan untuk menampilkan daftar transaksi pelunasan kepada admin melalui halaman `admin/pelunasan.php`.
+
+## D.2. Menampilkan Detail Pelunasan
+
+### Deskripsi
+
+Pada tahap ini, saya menambahkan method `pelunasanDetail(string $kodeSewa)` untuk menampilkan detail transaksi, riwayat pembayaran, serta sisa kewajiban yang harus dilunasi.
+
+Halaman detail ini digunakan oleh admin untuk memeriksa informasi transaksi sebelum mencatat pembayaran pelunasan.
+
+### Implementasi
+
+Langkah-langkah implementasi:
+
+1. Memastikan admin telah login menggunakan `require_admin_login()`.
+2. Memastikan permintaan menggunakan metode HTTP `GET`.
+3. Mengambil kode transaksi dari parameter URL.
+4. Mengubah karakter `~` pada URL menjadi `/` agar sesuai dengan format kode transaksi yang tersimpan di database.
+5. Memastikan kode transaksi tersedia.
+6. Memanggil method `getDetailPelunasan($kodeSewa)` pada `Pembayaran_model.php`.
+7. Mengembalikan respons HTTP `404` apabila transaksi tidak ditemukan.
+8. Mengirimkan data detail transaksi dan pesan notifikasi ke View `admin/pelunasan_detail.php`.
+9. Menambahkan penanganan kesalahan apabila detail transaksi gagal ditampilkan.
+
+### Hasil
+
+Method `pelunasanDetail()` digunakan untuk menampilkan informasi transaksi secara lengkap, termasuk data penyewa, rincian kendaraan, riwayat pembayaran, dan sisa kewajiban.
+
+## D.3. Memproses Pelunasan
+
+### Deskripsi
+
+Pada tahap ini, saya menambahkan method `prosesPelunasan(string $kodeSewa)` untuk memproses pembayaran pelunasan yang diterima langsung oleh admin.
+
+Proses pelunasan dapat dilakukan menggunakan metode pembayaran tunai maupun transfer. Khusus pembayaran transfer, admin mengunggah bukti transfer yang sebelumnya diterima dari penyewa.
+
+### Implementasi
+
+Proses implementasi dilakukan dengan ketentuan berikut:
+
+1. Memastikan admin telah login menggunakan `require_admin_login()`.
+2. Memastikan permintaan menggunakan metode HTTP `POST`.
+3. Memeriksa ketersediaan kode transaksi.
+4. Mengambil metode pembayaran dari input formulir melalui field `mtode_byr`.
+5. Memastikan metode pembayaran hanya menggunakan nilai `tunai` atau `transfer`.
+6. Apabila pembayaran menggunakan tunai, sistem tidak memerlukan unggahan bukti pembayaran.
+7. Apabila pembayaran menggunakan transfer, Controller memanggil helper `simpanFileBukti('ft_byr')` untuk memvalidasi dan menyimpan bukti transfer.
+8. Memanggil method `simpanPelunasan()` pada `Pembayaran_model.php` untuk mencatat pembayaran.
+9. Menampilkan pesan keberhasilan yang berisi kode pembayaran, status pembayaran `valid`, dan status transaksi `lunas` apabila proses berhasil.
+10. Menangani kesalahan menggunakan `try-catch` apabila proses pelunasan gagal.
+
+### Validasi Unggahan Bukti Transfer
+
+Untuk pembayaran transfer, bukti pembayaran divalidasi dengan ketentuan:
+
+- Ukuran file maksimal 5 MB.
+- Format gambar yang diperbolehkan adalah JPEG, PNG, dan WEBP.
+- Struktur file gambar diperiksa sebelum disimpan.
+- Nama file bukti pembayaran dikirimkan ke Model untuk dicatat pada database.
+
+Apabila proses pelunasan gagal setelah file bukti diunggah, Controller memanggil helper `hapusBuktiBaru()` untuk menghapus file baru tersebut apabila diperlukan.
+
+### Penerapan Post-Redirect-Get (PRG)
+
+Pada proses pelunasan, diterapkan pola Post-Redirect-Get (PRG) menggunakan method `redirectDenganPesan()`.
+
+Pola ini digunakan agar setelah formulir dikirim melalui metode POST, admin diarahkan kembali ke halaman detail pelunasan. Dengan demikian, pengiriman ulang formulir ketika halaman dimuat ulang dapat dihindari.
+
+### Hasil
+
+Method `prosesPelunasan()` bertugas menerima input pelunasan dari admin, memvalidasi metode pembayaran, menangani unggahan bukti transfer apabila diperlukan, serta memanggil Model untuk menyimpan pembayaran dan memperbarui status transaksi.
+
+## D.4. Menampilkan Dokumen Transaksi
+
+### Deskripsi
+
+Pada tahap ini, saya menambahkan method `dokumenTransaksi(string $kodeSewa)` untuk menampilkan dokumen transaksi yang telah disiapkan dan dapat dicetak oleh admin.
+
+Dokumen transaksi berisi informasi yang diambil dari beberapa tabel database, yaitu `t_sewa`, `t_penyewa`, `t_pilih`, `t_mobil`, dan `t_bayar`.
+
+### Implementasi
+
+Langkah-langkah implementasi:
+
+1. Memastikan admin telah login menggunakan `require_admin_login()`.
+2. Memastikan permintaan menggunakan metode HTTP `GET`.
+3. Memeriksa ketersediaan kode transaksi.
+4. Memanggil method `getDetailPelunasan($kodeSewa)` pada `Pembayaran_model.php`.
+5. Memeriksa apakah data transaksi tersedia.
+6. Mengembalikan respons HTTP `404` apabila data transaksi tidak ditemukan.
+7. Mengirimkan data transaksi ke View `admin/dokumen_transaksi.php`.
+8. Menambahkan penanganan kesalahan apabila dokumen transaksi gagal ditampilkan.
+
+Controller hanya bertugas mengambil data dari Model dan menyajikannya melalui View. Pengaturan tampilan dokumen untuk kebutuhan cetak dilakukan pada bagian View.
+
+### Hasil
+
+Method `dokumenTransaksi()` digunakan untuk menampilkan dokumen transaksi berdasarkan kode sewa yang dipilih. Dokumen tersebut nantinya dapat dicetak menggunakan fasilitas cetak pada browser.
+
+## D.5. Mempertahankan Fitur Pembayaran P9
+
+### Deskripsi
+
+Pengembangan Controller pada Pertemuan 10 dilakukan dengan melanjutkan fitur pembayaran yang telah dibuat pada Pertemuan 9.
+
+Oleh karena itu, seluruh method pembayaran P9 tetap dipertahankan agar fitur pembayaran sebelumnya tidak mengalami kerusakan atau kehilangan fungsi.
+
+### Implementasi
+
+Method pembayaran P9 yang tetap dipertahankan meliputi:
+
+1. `verifikasiIndex()` untuk menampilkan daftar pembayaran DP yang menunggu verifikasi admin.
+2. `verifikasiDetail()` untuk menampilkan detail pembayaran dan bukti transfer.
+3. `prosesVerifikasi()` untuk memproses keputusan verifikasi pembayaran oleh admin.
+4. `index()` untuk menampilkan daftar pembayaran milik penyewa.
+5. `detail()` untuk menampilkan detail pembayaran milik penyewa.
+6. `uploadBukti()` untuk menerima unggahan bukti transfer dari penyewa.
+
+Selain method tersebut, helper berikut juga tetap dipertahankan:
+
+- `simpanFileBukti()`
+- `hapusBuktiBaru()`
+- `hapusBuktiLama()`
+- `wajibLoginPenyewa()`
+- `wajibMetode()`
+- `redirectDenganPesan()`
+
+### Perbedaan Proses Pembayaran P9 dan P10
+
+Terdapat perbedaan pada pihak yang melakukan unggahan bukti pembayaran:
+
+- **P9:** Penyewa mengunggah bukti pembayaran DP melalui aplikasi.
+- **P10:** Admin mengunggah bukti transfer pelunasan yang telah diterima dari penyewa.
+
+Keduanya tetap menggunakan helper penyimpanan bukti yang sama, tetapi memiliki alur proses dan hak akses yang berbeda.
+
+### Hasil
+
+Seluruh fitur pembayaran P9 tetap dipertahankan dan pengembangan P10 menambahkan proses pelunasan tanpa menghilangkan fungsi pembayaran yang telah tersedia sebelumnya.
+
+## D.6. Melakukan Pemeriksaan Awal Controller
+
+### Deskripsi
+
+Setelah seluruh method Controller Pelunasan ditambahkan, saya melakukan pemeriksaan awal untuk memastikan setiap method telah mengikuti aturan akses, metode HTTP, validasi input, serta hubungan antara Controller dan Model.
+
+### Implementasi dan Pengujian
+
+Pemeriksaan dilakukan terhadap beberapa hal berikut:
+
+1. Memastikan setiap method pelunasan menggunakan `require_admin_login()` untuk membatasi akses hanya kepada admin.
+2. Memastikan method yang menampilkan halaman menggunakan metode HTTP `GET`.
+3. Memastikan method pemrosesan pelunasan menggunakan metode HTTP `POST`.
+4. Memastikan kode transaksi diperiksa sebelum diteruskan ke Model.
+5. Memastikan metode pembayaran hanya menerima `tunai` atau `transfer`.
+6. Memastikan unggahan bukti transfer hanya dilakukan apabila metode pembayaran yang dipilih adalah transfer.
+7. Memastikan Controller memanggil method yang sesuai pada `Pembayaran_model.php`.
+8. Memastikan data dikirimkan ke View sesuai dengan halaman yang ditampilkan.
+9. Memastikan penanganan kesalahan dan pola Post-Redirect-Get (PRG) diterapkan pada proses pelunasan.
+
+### Hasil Pemeriksaan
+
+Hasil pemeriksaan awal Controller:
+
+- Method `pelunasanIndex()`: (Isi hasil pemeriksaan).
+- Method `pelunasanDetail()`: (Isi hasil pemeriksaan).
+- Method `prosesPelunasan()`: (Isi hasil pemeriksaan).
+- Method `dokumenTransaksi()`: (Isi hasil pemeriksaan).
+- Perlindungan akses admin: (Isi hasil pemeriksaan).
+- Validasi metode HTTP: (Isi hasil pemeriksaan).
+- Validasi metode pembayaran: (Isi hasil pemeriksaan).
+- Penanganan unggahan bukti transfer: (Isi hasil pemeriksaan).
+- Penerapan PRG: (Isi hasil pemeriksaan).
+- Pemertahanan fitur pembayaran P9: (Isi hasil pemeriksaan).
+
+Pemeriksaan pada tahap ini merupakan pemeriksaan awal terhadap kode Controller. Pengujian fungsional melalui halaman aplikasi dilakukan setelah View dan Route selesai dibuat serta diintegrasikan.
+
+## D.7. Memperbarui Dokumentasi dan Git
+
+### Deskripsi
+
+Setelah implementasi Controller Pelunasan selesai, saya memperbarui file `README.md` untuk mendokumentasikan seluruh perubahan yang dilakukan pada file `Pembayaran_controller.php`.
+
+Dokumentasi mencakup penambahan method pelunasan, proses unggah bukti transfer, penyajian dokumen transaksi, serta pemertahanan fungsi pembayaran P9.
+
+### Implementasi
+
+Langkah-langkah yang dilakukan:
+
+1. Memperbarui dokumentasi tahap D pada file `pertemuan-10/README.md`.
+2. Mencatat penambahan method `pelunasanIndex()`.
+3. Mencatat penambahan method `pelunasanDetail()`.
+4. Mencatat penambahan method `prosesPelunasan()`.
+5. Mencatat penambahan method `dokumenTransaksi()`.
+6. Mendokumentasikan fitur pembayaran P9 yang tetap dipertahankan.
+7. Mencatat hasil pemeriksaan awal dan kendala yang ditemukan, apabila ada.
+8. Menyalin seluruh isi workspace `dpwl-nim/` ke folder arsip `dpwl-nim-nama/pertemuan-10/` dengan menimpa berkas yang sesuai.
+9. Membuka Terminal pada direktori repositori Git.
+10. Menyimpan perubahan menggunakan perintah Git.
+
+### Perintah Git
+
+```bash
+git add .
+git commit -m "Menambahkan controller pelunasan dan dokumen transaksi P10"
+git push
+```
+
+### Hasil
+
+Implementasi Controller Pelunasan telah didokumentasikan sebagai bagian dari pengembangan aplikasi pada Pertemuan 10. Controller ini menjadi penghubung antara Model Pelunasan dengan View, serta menangani proses pelunasan dan penyajian dokumen transaksi.
+
+---
+
+**Catatan:** Hasil pemeriksaan diisi berdasarkan kondisi kode yang sebenarnya. Pengujian fungsional melalui halaman aplikasi dilakukan setelah Route dan View selesai diintegrasikan.
