@@ -720,3 +720,179 @@ Implementasi Controller Pelunasan telah didokumentasikan sebagai bagian dari pen
 ---
 
 **Catatan:** Hasil pemeriksaan diisi berdasarkan kondisi kode yang sebenarnya. Pengujian fungsional melalui halaman aplikasi dilakukan setelah Route dan View selesai diintegrasikan.
+
+# E. Membuat Route dan Integrasi Menu Pelunasan
+
+## E.1. Menambahkan Route Pelunasan
+
+### Deskripsi
+
+Pada tahap ini, saya melakukan penambahan route untuk menghubungkan URL yang diakses oleh pengguna dengan method yang terdapat pada `Pembayaran_controller.php`.
+
+Route diperlukan agar fitur pelunasan transaksi dapat diakses melalui halaman daftar pelunasan, halaman detail pelunasan, proses pelunasan, dan dokumen transaksi.
+
+### Implementasi
+
+Penambahan route dilakukan pada file:
+
+`application/config/routes.php`
+
+Route yang ditambahkan adalah sebagai berikut:
+
+```php
+$route['admin/pembayaran/pelunasan'] = 'Pembayaran_controller/pelunasanIndex';
+$route['admin/pembayaran/pelunasan/proses/(:any)'] = 'Pembayaran_controller/prosesPelunasan/$1';
+$route['admin/pembayaran/dokumen/(:any)'] = 'Pembayaran_controller/dokumenTransaksi/$1';
+$route['admin/pembayaran/pelunasan/(:any)'] = 'Pembayaran_controller/pelunasanDetail/$1';
+```
+
+Fungsi dari masing-masing route:
+
+1. **Route daftar pelunasan:** Mengarahkan pengguna ke method `pelunasanIndex()` untuk menampilkan daftar transaksi yang masih memiliki kewajiban pembayaran.
+2. **Route proses pelunasan:** Mengarahkan permintaan proses pelunasan ke method `prosesPelunasan()` berdasarkan kode transaksi.
+3. **Route dokumen transaksi:** Mengarahkan pengguna ke method `dokumenTransaksi()` untuk menampilkan dokumen transaksi.
+4. **Route detail pelunasan:** Mengarahkan pengguna ke method `pelunasanDetail()` untuk menampilkan informasi detail transaksi.
+
+Penulisan route dilakukan dengan memperhatikan urutannya. Route yang lebih spesifik ditempatkan sebelum route yang lebih umum agar tidak tertangkap oleh pola route lainnya.
+
+Saya juga mempertahankan route P9 yang sudah tersedia agar fitur pembayaran sebelumnya tetap dapat digunakan.
+
+## E.2. Mengintegrasikan Menu Pelunasan pada Sidebar Admin
+
+### Deskripsi
+
+Setelah menambahkan route, saya melakukan integrasi menu Pelunasan Transaksi pada navigasi sidebar admin.
+
+Menu ini digunakan untuk memudahkan admin dalam mengakses halaman pengelolaan pelunasan transaksi penyewaan kendaraan.
+
+### Implementasi
+
+Penambahan menu dilakukan pada file:
+
+`application/views/templates/sidebar.php`
+
+Kode menu yang ditambahkan:
+
+```php
+<li>
+    <a href="<?= htmlspecialchars(site_url('admin/pembayaran/pelunasan'), ENT_QUOTES, 'UTF-8') ?>">
+        <i class="fa fa-credit-card"></i>
+        <span>Pelunasan Transaksi</span>
+    </a>
+</li>
+```
+
+Penjelasan bagian menu:
+
+1. `site_url('admin/pembayaran/pelunasan')` digunakan untuk mengarahkan menu menuju halaman daftar pelunasan.
+2. `htmlspecialchars()` digunakan untuk membantu mengamankan output URL yang ditampilkan.
+3. `fa fa-credit-card` digunakan sebagai ikon kartu pembayaran.
+4. `Pelunasan Transaksi` merupakan nama menu yang ditampilkan pada sidebar admin.
+
+Menu ditambahkan dengan mengikuti struktur dan pola tampilan menu yang sudah tersedia serta ditempatkan pada bagian navigasi admin.
+
+## E.3. Memeriksa Route dan Pengendalian
+
+### Deskripsi
+
+Setelah menambahkan route dan menu Pelunasan Transaksi, saya melakukan pemeriksaan awal untuk memastikan setiap route telah diarahkan ke method Controller yang sesuai.
+
+Pemeriksaan ini juga dilakukan untuk memastikan bahwa fitur pelunasan tetap memiliki pengendalian akses admin dan tidak mengganggu route pembayaran P9 yang sudah tersedia.
+
+### Implementasi dan Pemeriksaan
+
+Hal-hal yang diperiksa meliputi:
+
+1. **Route daftar pelunasan**
+
+   Memastikan URL daftar pelunasan mengarah ke method `pelunasanIndex()`.
+
+   ```php
+   $route['admin/pembayaran/pelunasan'] = 'Pembayaran_controller/pelunasanIndex';
+   ```
+
+2. **Route detail pelunasan**
+
+   Memastikan URL detail pelunasan mengarah ke method `pelunasanDetail()`.
+
+   ```php
+   $route['admin/pembayaran/pelunasan/(:any)'] = 'Pembayaran_controller/pelunasanDetail/$1';
+   ```
+
+3. **Route proses pelunasan**
+
+   Memastikan URL proses pelunasan mengarah ke method `prosesPelunasan()` dan prosesnya hanya menerima metode HTTP POST melalui pengendalian pada Controller.
+
+   ```php
+   $route['admin/pembayaran/pelunasan/proses/(:any)'] = 'Pembayaran_controller/prosesPelunasan/$1';
+   ```
+
+4. **Route dokumen transaksi**
+
+   Memastikan URL dokumen transaksi mengarah ke method `dokumenTransaksi()`.
+
+   ```php
+   $route['admin/pembayaran/dokumen/(:any)'] = 'Pembayaran_controller/dokumenTransaksi/$1';
+   ```
+
+5. **Menu Pelunasan Transaksi**
+
+   Memastikan menu pada sidebar admin mengarah ke URL:
+
+   `admin/pembayaran/pelunasan`
+
+6. **Pengendalian akses admin**
+
+   Memastikan seluruh method pelunasan dan dokumen transaksi tetap dilindungi oleh `require_admin_login()` agar hanya admin yang sudah login yang dapat mengakses fitur tersebut.
+
+7. **Mempertahankan route P9**
+
+   Memastikan seluruh route pembayaran P9 yang sudah tersedia tetap dipertahankan dan tidak dihapus atau diganti.
+
+### Hasil Pemeriksaan
+
+Hasil pemeriksaan dicatat setelah memastikan bahwa:
+
+- Route daftar pelunasan sudah diarahkan ke method yang sesuai.
+- Route detail pelunasan sudah diarahkan ke method yang sesuai.
+- Route proses pelunasan sudah diarahkan ke method yang sesuai.
+- Route dokumen transaksi sudah diarahkan ke method yang sesuai.
+- Menu Pelunasan Transaksi sudah diarahkan ke URL yang benar.
+- Pengendalian akses admin tetap diterapkan.
+- Route P9 tetap dipertahankan.
+
+Pengujian tampilan halaman dan proses pelunasan secara fungsional dilakukan setelah View pada Bagian F dan G selesai dibuat serta diintegrasikan.
+
+## E.4. Memperbarui Dokumentasi dan Git
+
+### Deskripsi
+
+Setelah penambahan route dan integrasi menu selesai, saya memperbarui dokumentasi pada file `README.md` untuk mencatat seluruh perubahan yang dilakukan pada tahap E.
+
+Dokumentasi mencakup penambahan route daftar pelunasan, route detail pelunasan, route proses pelunasan, route dokumen transaksi, integrasi menu pada sidebar admin, serta hasil pemeriksaan route dan navigasi.
+
+### Implementasi
+
+Langkah-langkah yang dilakukan:
+
+1. Memperbarui dokumentasi tahap E pada file `pertemuan-10/README.md`.
+2. Mencatat seluruh route baru yang ditambahkan pada `application/config/routes.php`.
+3. Mencatat integrasi menu Pelunasan Transaksi pada `application/views/templates/sidebar.php`.
+4. Menambahkan hasil pemeriksaan route dan navigasi.
+5. Menyalin seluruh isi workspace `dpwl-nim/` ke folder arsip `dpwl-nim-nama/pertemuan-10/` dengan menimpa berkas yang sesuai.
+6. Membuka Terminal pada direktori repositori Git.
+7. Menyimpan perubahan menggunakan perintah Git berikut secara berurutan.
+
+### Perintah Git
+
+```bash
+git add .
+git commit -m "Menambahkan route dan menu pelunasan P10"
+git push
+```
+
+### Hasil
+
+Tahap E mendukung integrasi fitur pelunasan transaksi ke dalam aplikasi penyewaan kendaraan. Dengan adanya route dan menu Pelunasan Transaksi, admin dapat diarahkan menuju halaman pengelolaan pelunasan melalui navigasi aplikasi.
+
+Setelah tahap ini selesai, pengerjaan dilanjutkan ke **Bagian F: Membuat View Daftar dan Detail Pelunasan**.
